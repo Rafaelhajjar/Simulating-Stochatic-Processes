@@ -1,0 +1,266 @@
+# Simulating Stochatic Processes
+# This Python script simulates the Brusselator chemical reaction using both the Monte Carlo method and the numerical solution
+# of the ordinary differential equations (ODEs). It then performs parameter fitting using least squares optimization to match
+# the Monte Carlo and ODE simulations. The code includes functions for Monte Carlo simulation, ODE system derivatives, ODE solving,
+# and objective function for optimization.
+
+# Last Modified: [28/11/2023]
+
+
+
+# Author:
+# - Rafael Hajjar
+
+# Brusselator Monte Carlo Simulation Function
+#function brusselator_MC(X0, Tfinal, run_number):
+#    Initialize empty arrays for concentrations (X) and time (t)
+#    Define reaction rate constants c
+#    Append initial concentrations X0 to X array
+#    Append initial time 0 to t array
+
+    # Monte Carlo simulation loop
+#    while t_total < Tfinal:
+#        Calculate reaction rates a_1, a_2, a_3, a_4
+#        Calculate total reaction rate a_0
+#        Generate random numbers r1 and r2
+#        Calculate time step T using the random number and total rate
+
+        # Reaction selection based on random number
+#        if any concentration in X is <= 0:
+#            Break the loop if any concentration becomes non-positive
+#        else if (r2 * a_0 < a_1):
+#            Perform reaction 1: X -> X + [1, 0]
+#        else if (r2 * a_0 < a_1 + a_2):
+#            Perform reaction 2: X -> X + [-1, 1]
+#        else if (r2 * a_0 < a_1 + a_2 + a_3):
+#            Perform reaction 3: X -> X + [1, -1]
+#        else:
+#            Perform reaction 4: X -> X + [-1, 0]
+
+#        Update time and total time
+
+#    Plot the trajectory of y1 vs y2 for the current run
+#    Return time array t and concentrations array X
+
+# Main Monte Carlo Simulation Loop (Run the simulation 10 times)
+# each time increase the run number and plot on same plot
+
+# Plot all Monte Carlo trajectories
+#Show the plot
+
+# Brusselator ODE System Derivatives Function
+#define function brusselator_derivatives(t, X, kX1, kX2, k3, k4):
+#    Extract concentrations Y1 and Y2 from X
+#    Calculate derivatives dY1dt and dY2dt based on the Brusselator ODE system
+#    Return the list of derivatives [dY1dt, dY2dt]
+
+# Brusselator ODE Solver Function
+#define function brusselator_ODE(X0, tf, kX1, kX2, k3, k4):
+#    Define the time span (t_span) from 0 to tf
+#    Solve the Brusselator ODE system using solve_ivp with initial conditions X0 and parameters
+#    Specify time points for evaluation (t_eval)
+#    Evaluate the solution at specified time points
+#    Return the time array t_eval and concentrations array X
+
+# Brusselator Objective Function for Least Squares Optimization
+#define function objective_function(params):
+#    Extract parameters kX1, kX2, k3, k4 from the input array
+#    Run the ODE simulation with the current parameters using brusselator_ODE
+#    Run the Monte Carlo simulation using brusselator_MC
+#    Transpose ODE concentrations for shape matching
+#    Calculate residuals as the difference between Monte Carlo and ODE simulations
+#    Flatten the residuals array for least squares optimization
+#    Return the flattened residuals
+
+# Initial guess for the parameters
+#initial_params = [10, 30, 10, 20]
+
+# Perform least squares optimization to fit the parameters
+#result = least_squares(objective_function, initial_params)
+
+# Extract the fitted parameters from the optimization result
+#kX1_fit, kX2_fit, k3_fit, k4_fit = result.x
+
+# Print or visualize the fitted parameters
+#Print the fitted parameters
+
+# Run the ODE simulation with the optimal values
+#t_eval, X_fit = brusselator_ODE([1, 2], 14, kX1_fit, kX2_fit, k3_fit, k4_fit)
+
+# Plot the original and fitted ODE simulations along with Monte Carlo
+#Plot Monte Carlo trajectories
+#Plot ODE simulations (original and fitted) for Y1 and Y2
+#Show the plot
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+from scipy.optimize import least_squares
+
+def brusselator_MC(X0, Tfinal, run_number):
+    """
+    Simulate the Brusselator system using the Monte Carlo method.
+
+    Parameters:
+    - X0: Initial concentrations of Y1 and Y2
+    - Tfinal: Total simulation time
+    - run_number: Run number for identification in the plot
+
+    Returns:
+    - t: Time array
+    - X: Concentrations array
+    """
+    # Initialize empty arrays for concentrations (X) and time (t)
+    t_total = 0
+    X = []
+    t = []
+ # Define reaction rate constants c
+    c = np.array([5000, 50, 0.00005, 5])
+    X.append(X0)
+    t.append(0)
+# Monte Carlo simulation loop
+    while t_total < Tfinal:
+        # Calculate reaction rates a_1, a_2, a_3, a_4
+        a_1 = c[0]
+        a_2 = c[1] * X[-1][0]
+        a_3 = c[2] * X[-1][0]* X[-1][0] * X[-1][1]
+        a_4 = c[3] * X[-1][0]
+# Calculate total reaction rate a_0
+        a_0 = a_1 + a_2 + a_3 + a_4
+#generate random number and time till next reaction
+        r1 = np.random.rand()
+        T = -1/a_0 * np.log(r1)
+#generate second random number
+        r2 = np.random.rand()
+#checks which reaction occurs and changes the y1 and y2 values accordingly
+        if any(i <= 0 for i in X[-1]):
+            break
+        elif (r2 * a_0 < a_1):
+            X.append([X[-1][0] +1, X[-1][1]])
+
+        elif (r2 * a_0 < a_1 + a_2):
+            X.append([X[-1][0]-1, X[-1][1] + 1])
+
+        elif (r2 * a_0 < a_1 + a_2 + a_3):
+            X.append([X[-1][0]+1, X[-1][1]-1])
+        else:
+            X.append([X[-1][0]-1, X[-1][1]])
+
+        t.append(t[-1] + T)
+        t_total += T
+
+    X = np.array(X)
+    t = np.array(t)
+
+    return (t,X)
+
+# Run the simulation 10 times
+for run_number in range(1, 11):
+    t,x=brusselator_MC([1000, 2000], 14, run_number)
+    plt.plot(x[:, 0]/1000, x[:, 1]/1000, label=f'y1 vs y2 - Run {run_number}')
+    plt.xlabel('y1')
+    plt.ylabel('y2')
+    plt.legend()
+
+plt.show()
+
+
+
+def brusselator_derivatives(t,X, kX1, kX2, k3, k4):
+    """
+    Calculate the derivatives for the Brusselator ODE system.
+
+    Parameters:
+    - t: Time array
+    - X: Concentrations array
+    - kX1, kX2, k3, k4: Brusselator system parameters
+
+    Returns:
+    - List of derivatives for Y1 and Y2
+    """
+    #fetch values
+    Y1, Y2 = X
+    #calcualte the derivativs and return
+    dY1dt = kX1 - kX2 * Y1  + k3 * Y1* Y1 * Y2 - k4 * Y1
+    dY2dt = kX2 * Y1  - k3 * Y1*Y1 * Y2
+    return [dY1dt, dY2dt]
+
+def brusselator_ODE(X0, tf, kX1, kX2, k3, k4):
+    """
+    Solve the Brusselator ODE system using the solve_ivp method.
+
+    Parameters:
+    - X0: Initial concentrations of Y1 and Y2
+    - tf: Final simulation time
+    - kX1, kX2, k3, k4: Brusselator system parameters
+
+    Returns:
+    - t_eval: Time array for evaluation
+    - X: Concentrations array at specified time points
+
+    """
+    #sets time span and runs solve ivp
+    t_span = (0, tf)
+    solution = solve_ivp(brusselator_derivatives, t_span, X0, args=(kX1, kX2, k3, k4), dense_output=True)
+
+    # Use t_eval to specify the time points for evaluation
+    t_eval = np.linspace(0, tf, 1000)
+
+    # Evaluate the solution at the specified time points
+    X = solution.sol(t_eval)
+
+    return t_eval, X
+
+T_ODE, X_ODE = brusselator_ODE([1, 2], 19, 9.5, 38, 13, 21)
+#plot the ode y1 vs y2
+
+plt.plot(X_ODE[0, :], X_ODE[1, :], label='Y1 vs Y2')
+plt.xlabel('Y1')
+plt.ylabel('Y2')
+plt.legend()
+plt.show()
+
+t_MC,X_MC=brusselator_MC([1000, 2000], 14, run_number)
+
+#X_MC_transposed = X_MC.T
+
+#Interpolate X_MC to match the time points of the ODE simulation
+#X_MC_interpolated = np.column_stack([np.interp(T_ODE, t_MC, X_MC[:, 0]),
+#                                     np.interp(T_ODE, t_MC, X_MC[:, 1])])
+
+#plt.plot(X_MC_transposed[0, :]/1000, X_ODE[0, :], label='Y1')
+#plt.plot(X_MC_transposed[1, :]/1000, X_ODE[1, :], label='Y2')
+#plt.plot(X_MC_interpolated[0, :]/1000, X_ODE[0, :], label='Y1')
+#plt.plot(X_MC_interpolated[1, :]/1000, X_ODE[1, :], label='Y2')
+
+#plot the y1 v2 y2 for both mc and ode
+plt.plot(X_MC[:, 0]/500, X_MC[:, 1]/500, label='MC - Run 1', )
+plt.plot(X_ODE[0, :], X_ODE[1, :], label='ODE - Fitted',)
+
+plt.plot()
+plt.xlabel('MC')
+plt.ylabel('ODE')
+plt.legend()
+plt.show()
+
+# Plot Y1 for Monte Carlo and ODE on the same plot
+plt.plot(t_MC, X_MC[:, 0]/500, label='MC - Y1')
+plt.plot(T_ODE, X_ODE[0, :], label='ODE - Y1', linestyle='--')
+plt.xlabel('Time')
+plt.ylabel('Concentration')
+plt.legend()
+plt.title('Y1 Comparison: Monte Carlo vs ODE')
+plt.show()
+
+#plot of y2 for montecarlo and ode on same plot
+plt.plot(t_MC, X_MC[:, 1]/500, label='MC - Y2')
+plt.plot(T_ODE, X_ODE[1, :], label='ODE - Y2', linestyle='--')
+plt.xlabel('Time')
+plt.ylabel('Concentration')
+plt.legend()
+plt.title('Y2 Comparison: Monte Carlo vs ODE')
+plt.show()
+
